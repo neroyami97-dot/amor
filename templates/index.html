@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ datos.titulo }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        body {
+            background-color: #0b071a;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            overflow: hidden;
+            position: relative;
+        }
+        canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 1;
+            pointer-events: none;
+        }
+        .contenedor {
+            background: rgba(255, 255, 255, 0.95);
+            max-width: 520px;
+            width: 100%;
+            border-radius: 28px;
+            padding: 35px 28px;
+            text-align: center;
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6);
+            z-index: 10;
+            border: 2px solid #fff;
+        }
+        h1 {
+            color: #d6336c;
+            font-size: 2rem;
+            margin-bottom: 12px;
+        }
+        .reloj-caja {
+            background: #fff0f6;
+            border: 1.5px dashed #ff8787;
+            border-radius: 17px;
+            padding: 15px;
+            margin: 18px 0;
+        }
+        .reloj-titulo {
+            font-size: 0.85rem;
+            color: #a61e4d;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+            font-weight: bold;
+        }
+        .reloj-numeros {
+            display: flex;
+            justify-content: space-around;
+            color: #c2255c;
+        }
+        .bloque-tiempo span {
+            display: block;
+            font-size: 1.5rem;
+            font-weight: bold;
+        }
+        .bloque-tiempo small {
+            font-size: 0.75rem;
+            color: #862e9c;
+        }
+        .mensaje {
+            color: #495057;
+            line-height: 1.6;
+            font-size: 1.02rem;
+            margin-bottom: 20px;
+        }
+        .razones {
+            text-align: left;
+            background: #fff5f5;
+            padding: 15px 20px;
+            border-radius: 15px;
+            margin-bottom: 22px;
+        }
+        .razones h3 {
+            color: #c2255c;
+            font-size: 1rem;
+            margin-bottom: 8px;
+        }
+        .razones ul {
+            padding-left: 18px;
+            color: #495057;
+            font-size: 0.95rem;
+        }
+        .razones li {
+            margin-bottom: 6px;
+        }
+        button {
+            background: linear-gradient(45deg, #e64980, #f06595);
+            color: white;
+            border: none;
+            padding: 14px 30px;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: bold;
+            box-shadow: 0 6px 20px rgba(230, 73, 128, 0.4);
+            transition: transform 0.2s;
+        }
+        button:hover {
+            transform: scale(1.05);
+        }
+
+        /* Estilos del Modal y la Carta Larga */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(10px);
+            z-index: 100;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        .modal-wrapper {
+            position: relative;
+            max-width: 620px;
+            width: 90%;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: auto;
+        }
+        .modal-carta {
+            background: #fffafa;
+            width: 100%;
+            max-height: 85vh;
+            padding: 35px 30px;
+            border-radius: 30px;
+            box-shadow: 0 30px 80px rgba(0,0,0,0.9);
+            border: 4px solid #ff758c;
+            z-index: 10;
+            display: flex;
+            flex-direction: column;
+        }
+        .modal-carta h2 {
+            color: #d6336c;
+            margin-bottom: 18px;
+            font-size: 1.7rem;
+            text-align: center;
+            flex-shrink: 0;
+        }
+        .contenido-carta {
+            overflow-y: auto;
+            padding-right: 12px;
+            margin-bottom: 22px;
+            text-align: left;
+            color: #4a3b47;
+            font-size: 1.05rem;
+            line-height: 1.75;
+        }
+        .contenido-carta p {
+            margin-bottom: 16px;
+            text-align: justify;
+        }
+        .firma-carta {
+            margin-top: 20px;
+            text-align: right;
+            font-style: italic;
+            font-weight: bold;
+            color: #c2255c;
+            font-size: 1.1rem;
+        }
+        /* Barra de desplazamiento personalizada para la carta */
+        .contenido-carta::-webkit-scrollbar {
+            width: 6px;
+        }
+        .contenido-carta::-webkit-scrollbar-track {
+            background: #fff0f6;
+            border-radius: 10px;
+        }
+        .contenido-carta::-webkit-scrollbar-thumb {
+            background: #ff8787;
+            border-radius: 10px;
+        }
+        
+        .btn-cerrar {
+            background: #ff6b6b;
+            padding: 12px 35px;
+            font-size: 1.05rem;
+            align-self: center;
+            flex-shrink: 0;
+        }
+        .btn-cerrar:hover {
+            background: #fa5252;
+        }
+
+        /* Columnas laterales de fotos */
+        .columna-borde {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 140px;
+            overflow: hidden;
+            pointer-events: none;
+            z-index: 5;
+        }
+        .columna-izquierda {
+            right: calc(100% + 25px);
+        }
+        .columna-derecha {
+            left: calc(100% + 25px);
+        }
+
+        .track {
+            position: absolute;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+        .track-up {
+            animation: moverArriba 25s linear infinite;
+        }
+        .track-down {
+            animation: moverAbajo 25s linear infinite;
+        }
+
+        .foto-borde {
+            width: 125px;
+            height: 125px;
+            border-radius: 18px;
+            object-fit: cover;
+            border: 4px solid #fff;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.5);
+            margin-bottom: 22px;
+            flex-shrink: 0;
+        }
+
+        @keyframes moverArriba {
+            0% { transform: translateY(100%); }
+            100% { transform: translateY(-100%); }
+        }
+        @keyframes moverAbajo {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(100%); }
+        }
+
+        @media (max-width: 920px) {
+            .columna-borde {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <canvas id="canvasFondo"></canvas>
+
+    <div class="contenedor">
+        <h1>{{ datos.titulo }}</h1>
+
+        <div class="reloj-caja">
+            <div class="reloj-titulo">Tiempo juntos desde el 16 de marzo</div>
+            <div class="reloj-numeros">
+                <div class="bloque-tiempo"><span id="dias">--</span><small>Días</small></div>
+                <div class="bloque-tiempo"><span id="horas">--</span><small>Horas</small></div>
+                <div class="bloque-tiempo"><span id="minutos">--</span><small>Min</small></div>
+                <div class="bloque-tiempo"><span id="segundos">--</span><small>Seg</small></div>
+            </div>
+        </div>
+
+        <p class="mensaje">{{ datos.mensaje_principal }}</p>
+
+        <div class="razones">
+            <h3>✨ Lo que más amo de estos 8 meses:</h3>
+            <ul>
+                {% for razon in datos.razones %}
+                <li>{{ razon }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+
+        <button onclick="abrirModal()">Abrir mi carta para ti 💌</button>
+    </div>
+
+    <!-- Carta Modal con tu texto completo -->
+    <div id="modalCarta" class="modal-overlay">
+        <div class="modal-wrapper">
+            <div class="columna-borde columna-izquierda">
+                <div class="track track-up" id="trackIzquierda"></div>
+            </div>
+
+            <div class="modal-carta">
+                <h2>Para mi amor, en nuestros 8 meses ❤️✨</h2>
+                
+                <div class="contenido-carta">
+                    <p>Hoy cumplimos ocho meses. Ocho meses desde que nuestras vidas decidieron entrelazarse de verdad, desde que dejamos de ser dos caminos separados para empezar a construir uno solo. Y mientras me siento a escribirte esto, me doy cuenta de que no me alcanzan las palabras para explicar todo lo que significas para mí, ni todo lo que ha cambiado dentro de mí desde el día en que llegaste. Ocho meses en el calendario pueden parecer un suspiro, pero cuando los mido en risas, en abrazos, en miradas cómplices, en mensajes de buenos días y en noches hablando hasta quedarnos dormidos, siento que llevo toda una vida amándote.</p>
+                    
+                    <p>A veces me detengo a recordar cómo empezó todo. Recuerdo los nervios del principio, esa emoción que me daba cada vez que sabía que te iba a ver o cada vez que sonaba mi teléfono y veía tu nombre en la pantalla. En ese momento yo sabía que me gustabas muchísimo, pero jamás me imaginé la magnitud de lo que íbamos a construir. No me imaginé que te ibas a convertir en mi gran amiga, en mi confidente, en mi apoyo incondicional y en el centro de mis días. Hoy, ocho meses después, miro hacia atrás y me da una alegría inmensa ver cómo ese cariño inicial se transformó en un amor real, profundo, maduro y lleno de vida.</p>
+                    
+                    <p>Quiero que sepas que estos ocho meses han sido los más bonitos de mi vida, y no porque todo haya sido perfecto o color de rosa, sino porque todo ha sido contigo. La vida tiene días buenos y días difíciles; hay semanas en las que el cansancio pesa, en las que las responsabilidades abruman, en las que el estrés o los problemas intentan robarnos la paz. Pero tenerte a mi lado lo cambia todo. En los días buenos, tú eres la razón por la que mi sonrisa es más grande y el motivo por el que quiero celebrar cada pequeño triunfo. Y en los días malos, cuando siento que ya no puedo más o cuando tengo la cabeza llena de ruido, basta con escucharte, leer un mensaje tuyo o sentir tu abrazo para que todo vuelva a su lugar. Tú eres mi refugio, mi calma en medio del caos y el único lugar al que siempre quiero volver al final del día.</p>
+                    
+                    <p>Me he enamorado de cada versión de ti. Me encanta tu versión alegre, esa que se ríe con ganas y me contagia su energía hasta hacerme olvidar cualquier preocupación. Me encanta tu versión tierna, cuando me buscas, cuando me abrazas fuerte o cuando me miras con esos ojos que me desarman por completo. Pero también amo tu versión seria, tu versión cansada, tu versión enojada y hasta tus momentos de terquedad, porque todo eso forma parte de la mujer real, auténtica e increíble que eres. No quiero una versión idealizada de ti; te quiero a ti, completa, con tus virtudes, con tus manías, con tus sueños y hasta con tus días grises.</p>
+                    
+                    <p>Gracias por estos ocho meses de entrega sincera. Gracias por tenerme paciencia cuando a veces me cuesta expresarme o cuando el día a día me absorbe. Gracias por escucharme con atención incluso cuando te hablo de cosas que quizás no te interesan tanto, solo porque sabes que para mí son importantes. Gracias por confiar en mí, por abrirme tu corazón, por dejarme conocer tus miedos y tus metas, y por permitirme ser parte de tu mundo. Valoro cada detalle tuyo: desde los gestos más grandes hasta esas pequeñas cosas que haces sin darte cuenta y que me confirman todos los días que estoy con la persona correcta.</p>
+                    
+                    <p>Contigo he aprendido lo que significa amar de verdad. He aprendido que querer a alguien no es solo estar en los momentos de fiesta o de risas, sino elegirla todos los días, cuidarla, respetarla, darle su lugar y esforzarse por hacerla feliz incluso cuando estamos cansados. Me haces querer ser un mejor hombre cada día. Me motivas a trabajar duro, a superarme, a no rendirme y a luchar por lo que quiero, porque ahora en mis planes de futuro no estoy solo yo: estás tú. Cuando pienso en lo que viene, en los meses y años que nos faltan, en los lugares que quiero conocer contigo y en todo lo que quiero lograr, no me cabe ninguna duda de que quiero vivirlo todo a tu lado.</p>
+                    
+                    <p>Ocho meses son apenas los primeros capítulos de una historia que apenas está empezando a escribirse, y no sabes la ilusión que me da todo lo que nos falta por vivir. Prometo seguir cuidando este amor como el tesoro más grande que tengo. Prometo seguir haciéndote reír cuando tengas un mal día, escucharte siempre que necesites desahogarte, celebrar cada paso que des y recordarte, hoy y siempre, lo hermosa, valiosa y especial que eres para mí. Nunca dudes de lo mucho que te amo, ni de lo agradecido que estoy con la vida por haberte puesto en mi camino.</p>
+                    
+                    <p>Feliz octavo mes, mi vida. Gracias por existir, gracias por elegirme y gracias por hacerme el hombre más feliz del mundo. Te amo con todo lo que soy, hoy, mañana y siempre.</p>
+                    
+                    <div class="firma-carta">
+                        Tuyo hoy y siempre,<br>
+                        Att: El hombre que te ama con todo su corazoncito, Yandry
+                    </div>
+                </div>
+
+                <button class="btn-cerrar" onclick="cerrarModal()">Cerrar</button>
+            </div>
+
+            <div class="columna-borde columna-derecha">
+                <div class="track track-down" id="trackDerecha"></div>
+            </div>
+        </div>
+    </div>
+
+    <audio id="musicaFondo" loop>
+        <source src="{{ url_for('static', filename='cancion.mp3') }}" type="audio/mpeg">
+    </audio>
+
+    <script>
+   const NOMBRES_FOTOS = [
+    'im1.jpeg', 'im2.jpeg', 'im3.jpeg', 
+    'im4.jpeg', 'im5.jpeg', 'im6.jpeg', 
+    'im7.jpeg', 'im8.jpeg', 'im9.jpeg'
+];
+
+const trackIzquierda = document.getElementById('trackIzquierda');
+const trackDerecha = document.getElementById('trackDerecha');
+
+function inicializarColumnas() {
+    // Esta línea NO la toques, déjala así:
+    const listaExtendida = [...NOMBRES_FOTOS, ...NOMBRES_FOTOS, ...NOMBRES_FOTOS];           
+            listaExtendida.forEach((archivo) => {
+                const imgIzq = document.createElement('img');
+                imgIzq.src = "{{ url_for('static', filename='fotos/') }}" + archivo;
+                imgIzq.className = 'foto-borde';
+                trackIzquierda.appendChild(imgIzq);
+
+                const imgDer = document.createElement('img');
+                imgDer.src = "{{ url_for('static', filename='fotos/') }}" + archivo;
+                imgDer.className = 'foto-borde';
+                trackDerecha.appendChild(imgDer);
+            });
+        }
+        inicializarColumnas();
+
+        const canvas = document.getElementById('canvasFondo');
+        const ctx = canvas.getContext('2d');
+        let elementos = [];
+
+        function ajustarCanvas() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', ajustarCanvas);
+        ajustarCanvas();
+
+        class ElementoMagico {
+            constructor() {
+                this.reiniciar(true);
+            }
+            reiniciar(inicioAleatorio = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = inicioAleatorio ? Math.random() * canvas.height : canvas.height + 30;
+                this.tamano = Math.random() * 18 + 12;
+                this.velocidadY = -(Math.random() * 1.5 + 1);
+                this.velocidadX = (Math.random() - 0.5) * 1;
+                this.rotacion = Math.random() * 360;
+                this.velocidadRotacion = (Math.random() - 0.5) * 3;
+                this.tipo = Math.random() > 0.5 ? 'corazon' : 'flor';
+                this.color = Math.random() > 0.3 ? '#ff4d6d' : '#ffb3c6';
+                this.alpha = Math.random() * 0.6 + 0.4;
+            }
+            actualizar() {
+                this.y += this.velocidadY;
+                this.x += this.velocidadX;
+                this.rotacion += this.velocidadRotacion;
+                if (this.y < -30) {
+                    this.reiniciar();
+                }
+            }
+            dibujar() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.rotacion * Math.PI / 180);
+                ctx.globalAlpha = this.alpha;
+                ctx.fillStyle = this.color;
+                ctx.shadowBlur = 15;
+                ctx.shadowColor = this.color;
+
+                if (this.tipo === 'corazon') {
+                    ctx.beginPath();
+                    let topVertices = this.tamano * 0.3;
+                    ctx.moveTo(0, topVertices);
+                    ctx.bezierCurveTo(0, 0, -this.tamano/2, 0, -this.tamano/2, topVertices);
+                    ctx.bezierCurveTo(-this.tamano/2, this.tamano*0.7, 0, this.tamano*0.9, 0, this.tamano);
+                    ctx.bezierCurveTo(0, this.tamano*0.9, this.tamano/2, this.tamano*0.7, this.tamano/2, topVertices);
+                    ctx.bezierCurveTo(this.tamano/2, 0, 0, 0, 0, topVertices);
+                    ctx.fill();
+                } else {
+                    ctx.beginPath();
+                    for (let i = 0; i < 5; i++) {
+                        ctx.arc(0, -this.tamano/3, this.tamano/4, 0, Math.PI * 2);
+                        ctx.rotate(72 * Math.PI / 180);
+                    }
+                    ctx.fill();
+                    ctx.beginPath();
+                    ctx.arc(0, 0, this.tamano/6, 0, Math.PI * 2);
+                    ctx.fillStyle = '#fff500';
+                    ctx.fill();
+                }
+                ctx.restore();
+            }
+        }
+
+        for (let i = 0; i < 70; i++) {
+            elementos.push(new ElementoMagico());
+        }
+
+        function animar() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            elementos.forEach(el => {
+                el.actualizar();
+                el.dibujar();
+            });
+            requestAnimationFrame(animar);
+        }
+        animar();
+
+        async function actualizarReloj() {
+            try {
+                const respuesta = await fetch('/api/tiempo');
+                const data = await respuesta.json();
+                document.getElementById('dias').textContent = data.dias;
+                document.getElementById('horas').textContent = String(data.horas).padStart(2, '0');
+                document.getElementById('minutos').textContent = String(data.minutos).padStart(2, '0');
+                document.getElementById('segundos').textContent = String(data.segundos).padStart(2, '0');
+            } catch (error) {
+                console.error("Error actualizando el reloj:", error);
+            }
+        }
+
+        function reproducirMusica() {
+            const audio = document.getElementById('musicaFondo');
+            audio.play().catch(e => console.log("Interacción requerida para audio."));
+        }
+
+        function abrirModal() {
+            reproducirMusica();
+            document.getElementById('modalCarta').style.display = 'flex';
+        }
+
+        function cerrarModal() {
+            document.getElementById('modalCarta').style.display = 'none';
+        }
+
+        setInterval(actualizarReloj, 1000);
+        actualizarReloj();
+    </script>
+</body>
+</html>
